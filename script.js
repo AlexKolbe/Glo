@@ -18,3 +18,4 @@ let fullPrice;
 let adaptive;
 
 alert("Hello World in alert 2!");
+alert("Hello World in alert 2!");
