@@ -16,3 +16,5 @@ let screenPrice;
 let rollback;
 let fullPrice;
 let adaptive;
+
+alert("Hello World in alert 2!");
