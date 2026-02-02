@@ -10,23 +10,17 @@ console.log("Hello in console!"); // this is comment
  fullPrice,
  adaptive
 */
-let title;
-let screens;
-let screenPrice;
-let rollback;
-let fullPrice;
-let adaptive;
 
 alert("Hello World in alert 2!");
 alert("Hello World in alert 2!");
 
 
-title = "Glo";
-screens = "Простые, Сложные, Интерактивные";
-screenPrice = 123;
-rollback = 55;
-fullPrice = 15;
-adaptive = false;
+let title = "Glo";
+let screens = "Простые, Сложные, Интерактивные";
+let screenPrice = 123;
+let rollback = 55;
+let fullPrice = 15;
+let adaptive = false;
 /*
 1) Следующим переменным присвоить значения
 
