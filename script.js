@@ -1,31 +1,97 @@
 'use strict';
 
 // ---------- Объявление переменных ----------
-// Получение данных от пользователя
-let title = prompt("Как называется ваш проект?", "Мой проект");
-let screens = prompt("Какие типы экранов нужно разработать?", "Простые, Сложные, Интерактивные");
-let screenPrice = parseFloat(prompt("Сколько будет стоить данная работа?", "12000"));
-let adaptive = confirm("Нужен ли адаптив на сайте?");
+let title;
+let screens;
+let screenPrice;
+let adaptive;
 
-let service1 = prompt("Какой дополнительный тип услуги нужен? (первая услуга)", "Дизайн");
-let servicePrice1 = parseFloat(prompt("Сколько это будет стоить? (первая услуга)", "5000"));
+let allServicePrices;
+let fullPrice;
+let servicePercentPrice;
 
-let service2 = prompt("Какой дополнительный тип услуги нужен? (вторая услуга)", "SEO");
-let servicePrice2 = parseFloat(prompt("Сколько это будет стоить? (вторая услуга)", "3000"));
-
-// Получение процента отката
-let commissionPercent = parseFloat(prompt("Какой процент отката посреднику? (например: 10)", "10"));
+let service1;
+let service2;
+let servicePrice1;
+let servicePrice2;
+let commissionPercent;
 
 // ---------- Объявление функций ----------
 
+const isNumber = function (num) {
+	return !isNaN(parseFloat(num)) && isFinite(num)
+}
+
+
+// Получение данных от пользователя
+const asking = function () {
+	title = prompt("Как называется ваш проект?", "Мой проект");
+	screens = prompt("Какие типы экранов нужно разработать?", "Простые, Сложные, Интерактивные");
+	screenPrice = prompt("Сколько будет стоить данная работа?");
+
+	// 1. Переписано получение screenPrice через do-while
+	do {
+		screenPrice = prompt("Сколько будет стоить данная работа?");
+		if (!isNumber(screenPrice)) {
+			alert("Пожалуйста, введите число!");
+		}
+	} while (!isNumber(screenPrice));
+
+	screenPrice = parseFloat(screenPrice);
+
+
+	adaptive = confirm("Нужен ли адаптив на сайте?");
+
+	// Получение процента отката
+	commissionPercent = parseFloat(prompt("Какой процент отката посреднику? (например: 10)", "10"));
+
+	if (isNaN(commissionPercent) || commissionPercent < 0 || commissionPercent > 100) {
+		console.warn("Введен некорректный процент отката. Используется значение по умолчанию 10%");
+		commissionPercent = 10;
+	}
+}
+
 // Function expression для получения суммы дополнительных услуг
 const getAllServicePrices = function () {
-	return servicePrice1 + servicePrice2;
+	let sum = 0; // Добавлено объявление переменной
+
+	for (let i = 0; i < 2; i++) {
+		let priceInput;
+
+		if (i === 0) {
+			service1 = prompt("Какой дополнительный тип услуги нужен? (первая услуга)", "Дизайн");
+			// 2. Добавлена проверка на число для стоимости услуги
+			do {
+				priceInput = prompt("Сколько это будет стоить дополнительная услуга?", "5000");
+				if (!isNumber(priceInput)) {
+					alert("Пожалуйста, введите число!");
+				}
+			} while (!isNumber(priceInput));
+
+			servicePrice1 = parseFloat(priceInput);
+			sum += servicePrice1;
+
+		} else if (i === 1) {
+			service2 = prompt("Какой дополнительный тип услуги нужен? (вторая услуга)", "SEO");
+			// 2. Добавлена проверка на число для стоимости услуги
+			do {
+				priceInput = prompt("Сколько это будет стоить дополнительная услуга?", "5000");
+				if (!isNumber(priceInput)) {
+					alert("Пожалуйста, введите число!");
+				}
+			} while (!isNumber(priceInput));
+
+			servicePrice2 = parseFloat(priceInput);
+			sum += servicePrice2;
+		}
+	}
+	return sum;
 };
 
 // Function declaration для получения полной стоимости
 function getFullPrice() {
-	return screenPrice + allServicePrices;
+	// 3. Приведение типов к числам для правильных расчетов
+	return parseFloat(screenPrice) + parseFloat(allServicePrices);
 }
 
 // Функция для форматирования названия
@@ -62,15 +128,12 @@ function getRollbackMessage(price) {
 
 // ---------- Основной код ----------
 
-if (isNaN(commissionPercent) || commissionPercent < 0 || commissionPercent > 100) {
-	console.warn("Введен некорректный процент отката. Используется значение по умолчанию 10%");
-	commissionPercent = 10;
-}
 
 // Расчеты
-let allServicePrices = getAllServicePrices();
-let fullPrice = getFullPrice();
-let servicePercentPrice = getServicePercentPrices();
+asking();
+allServicePrices = getAllServicePrices();
+fullPrice = getFullPrice();
+servicePercentPrice = getServicePercentPrices();
 
 // Форматирование названия
 title = getTitle();
