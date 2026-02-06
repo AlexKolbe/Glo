@@ -18,70 +18,108 @@ let commissionPercent;
 
 // ---------- Объявление функций ----------
 
-const isNumber = function (num) {
-	return !isNaN(parseFloat(num)) && isFinite(num)
+// Улучшенная функция проверки числа
+const isNumber = function (value) {
+	// Проверяем, что значение не null/undefined
+	if (value === null || value === undefined) {
+		return false;
+	}
+
+	// Убираем пробелы в начале и конце
+	const trimmedValue = value.toString().trim();
+
+	// Проверяем, является ли значение числом после очистки
+	return !isNaN(parseFloat(trimmedValue)) && isFinite(trimmedValue) && trimmedValue !== '';
 }
 
+// Функция для безопасного преобразования в число
+const parseNumber = function (value) {
+	if (!isNumber(value)) {
+		return NaN;
+	}
+
+	// Убираем пробелы и преобразуем
+	const trimmedValue = value.toString().trim();
+	return parseFloat(trimmedValue);
+}
+
+// Функция для запроса числа с проверкой
+const askForNumber = function (promptMessage, defaultValue) {
+	let inputValue;
+	let parsedNumber;
+
+	do {
+		inputValue = prompt(promptMessage, defaultValue);
+
+		// Если пользователь нажал Отмена
+		if (inputValue === null) {
+			alert("Отмена ввода. Используется значение по умолчанию.");
+			parsedNumber = parseNumber(defaultValue);
+			break;
+		}
+
+		parsedNumber = parseNumber(inputValue);
+
+		if (isNaN(parsedNumber)) {
+			alert("Пожалуйста, введите корректное число!");
+		}
+	} while (isNaN(parsedNumber));
+
+	return parsedNumber;
+}
 
 // Получение данных от пользователя
 const asking = function () {
 	title = prompt("Как называется ваш проект?", "Мой проект");
 	screens = prompt("Какие типы экранов нужно разработать?", "Простые, Сложные, Интерактивные");
-	screenPrice = prompt("Сколько будет стоить данная работа?");
 
-	// 1. Переписано получение screenPrice через do-while
-	do {
-		screenPrice = prompt("Сколько будет стоить данная работа?");
-		if (!isNumber(screenPrice)) {
-			alert("Пожалуйста, введите число!");
-		}
-	} while (!isNumber(screenPrice));
-
-	screenPrice = parseFloat(screenPrice);
-
+	// Используем новую функцию для запроса числа
+	screenPrice = askForNumber("Сколько будет стоить данная работа?", "10000");
 
 	adaptive = confirm("Нужен ли адаптив на сайте?");
 
-	// Получение процента отката
-	commissionPercent = parseFloat(prompt("Какой процент отката посреднику? (например: 10)", "10"));
+	// Получение процента отката с проверкой
+	let commissionInput;
+	do {
+		commissionInput = prompt("Какой процент отката посреднику? (например: 10)", "10");
 
-	if (isNaN(commissionPercent) || commissionPercent < 0 || commissionPercent > 100) {
-		console.warn("Введен некорректный процент отката. Используется значение по умолчанию 10%");
-		commissionPercent = 10;
-	}
+		// Если пользователь нажал Отмена
+		if (commissionInput === null) {
+			console.warn("Ввод отменен. Используется значение по умолчанию 10%");
+			commissionPercent = 10;
+			break;
+		}
+
+		commissionPercent = parseNumber(commissionInput);
+
+		if (isNaN(commissionPercent) || commissionPercent < 0 || commissionPercent > 100) {
+			alert("Пожалуйста, введите число от 0 до 100!");
+		}
+	} while (isNaN(commissionPercent) || commissionPercent < 0 || commissionPercent > 100);
 }
 
 // Function expression для получения суммы дополнительных услуг
 const getAllServicePrices = function () {
-	let sum = 0; // Добавлено объявление переменной
+	let sum = 0;
 
 	for (let i = 0; i < 2; i++) {
-		let priceInput;
+		let serviceName;
+		let servicePrice;
 
 		if (i === 0) {
 			service1 = prompt("Какой дополнительный тип услуги нужен? (первая услуга)", "Дизайн");
-			// 2. Добавлена проверка на число для стоимости услуги
-			do {
-				priceInput = prompt("Сколько это будет стоить дополнительная услуга?", "5000");
-				if (!isNumber(priceInput)) {
-					alert("Пожалуйста, введите число!");
-				}
-			} while (!isNumber(priceInput));
 
-			servicePrice1 = parseFloat(priceInput);
+			// Используем новую функцию для запроса цены
+			servicePrice = askForNumber("Сколько это будет стоить дополнительная услуга?", "5000");
+			servicePrice1 = servicePrice;
 			sum += servicePrice1;
 
 		} else if (i === 1) {
 			service2 = prompt("Какой дополнительный тип услуги нужен? (вторая услуга)", "SEO");
-			// 2. Добавлена проверка на число для стоимости услуги
-			do {
-				priceInput = prompt("Сколько это будет стоить дополнительная услуга?", "5000");
-				if (!isNumber(priceInput)) {
-					alert("Пожалуйста, введите число!");
-				}
-			} while (!isNumber(priceInput));
 
-			servicePrice2 = parseFloat(priceInput);
+			// Используем новую функцию для запроса цены
+			servicePrice = askForNumber("Сколько это будет стоить дополнительная услуга?", "5000");
+			servicePrice2 = servicePrice;
 			sum += servicePrice2;
 		}
 	}
@@ -90,8 +128,7 @@ const getAllServicePrices = function () {
 
 // Function declaration для получения полной стоимости
 function getFullPrice() {
-	// 3. Приведение типов к числам для правильных расчетов
-	return parseFloat(screenPrice) + parseFloat(allServicePrices);
+	return screenPrice + allServicePrices;
 }
 
 // Функция для форматирования названия
@@ -127,7 +164,6 @@ function getRollbackMessage(price) {
 }
 
 // ---------- Основной код ----------
-
 
 // Расчеты
 asking();
