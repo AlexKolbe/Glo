@@ -138,3 +138,110 @@ for (let i = 1; i <= 100; i++) {
 		console.log(`${i} - Делители этого числа: 1 и ${i}`);
 	}
 }
+
+
+/*
+lesson09-hard
+
+1) Выведите на страницу текущую дату и время в 2-х форматах:
+	a) 'Сегодня Вторник, 4 февраля 2020 года, 21 час 5 минут 33 секунды'
+	б) '04.02.2020 - 21:05:33'
+
+2) Для вывода в формате (а) напишите функцию, которая будет менять склонение слов в зависимости от числа, "час, часов, часа"
+
+3) Для вывода в формате (б) напишите функцию, которая будет добавлять 0 перед значениями которые состоят из одной цифры (из 9:5:3 1.6.2019 сделает 09:05:03 01.06.2019)
+
+4) С помощью функции setInterval, реализуйте обновление даты и времени каждую секунду
+
+*/
+
+// Функция для склонения слов (задание 2)
+function declensionWord(number, words) {
+	const cases = [2, 0, 1, 1, 1, 2];
+	return words[
+		number % 100 > 4 && number % 100 < 20
+			? 2
+			: cases[number % 10 < 5 ? number % 10 : 5]
+	];
+}
+
+// Функция для добавления нуля перед однозначными числами (задание 3)
+function addZero(number) {
+	return number < 10 ? '0' + number : number.toString();
+}
+
+// Функция для получения названия дня недели
+function getDayOfWeek(date) {
+	const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+	return days[date.getDay()];
+}
+
+// Функция для получения названия месяца
+function getMonthName(date) {
+	const months = [
+		'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+		'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+	];
+	return months[date.getMonth()];
+}
+
+// Функция для форматирования даты в стиле (а)
+function formatDateA(date) {
+	const dayOfWeek = getDayOfWeek(date);
+	const day = date.getDate();
+	const month = getMonthName(date);
+	const year = date.getFullYear();
+
+	const hours = date.getHours();
+	const minutes = date.getMinutes();
+	const seconds = date.getSeconds();
+
+	const hourWord = declensionWord(hours, ['час', 'часа', 'часов']);
+	const minuteWord = declensionWord(minutes, ['минута', 'минуты', 'минут']);
+	const secondWord = declensionWord(seconds, ['секунда', 'секунды', 'секунд']);
+
+	return `Сегодня ${dayOfWeek}, ${day} ${month} ${year} года, ${hours} ${hourWord} ${minutes} ${minuteWord} ${seconds} ${secondWord}`;
+}
+
+// Функция для форматирования даты в стиле (б)
+function formatDateB(date) {
+	const day = addZero(date.getDate());
+	const month = addZero(date.getMonth() + 1); // +1 потому что месяцы от 0 до 11
+	const year = date.getFullYear();
+
+	const hours = addZero(date.getHours());
+	const minutes = addZero(date.getMinutes());
+	const seconds = addZero(date.getSeconds());
+
+	return `${day}.${month}.${year} - ${hours}:${minutes}:${seconds}`;
+}
+
+// Функция для обновления времени на странице
+function updateDateTime() {
+	const now = new Date();
+
+	// Ищем или создаем контейнеры для вывода
+	let dateTimeContainerA = document.getElementById('date-time-format-a');
+	let dateTimeContainerB = document.getElementById('date-time-format-b');
+
+	// Если контейнеров нет на странице, создаем их
+	if (!dateTimeContainerA) {
+		dateTimeContainerA = document.createElement('div');
+		dateTimeContainerA.id = 'date-time-format-a';
+		document.body.appendChild(dateTimeContainerA);
+	}
+
+	if (!dateTimeContainerB) {
+		dateTimeContainerB = document.createElement('div');
+		dateTimeContainerB.id = 'date-time-format-b';
+		document.body.appendChild(dateTimeContainerB);
+	}
+
+	// Выводим отформатированные даты
+	dateTimeContainerA.textContent = formatDateA(now);
+	dateTimeContainerB.textContent = formatDateB(now);
+}
+
+// Запускаем обновление каждую секунду (задание 4)
+updateDateTime(); // сразу показываем время
+setInterval(updateDateTime, 1000);
