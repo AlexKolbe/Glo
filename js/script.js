@@ -1,5 +1,32 @@
 'use strict';
 
+// ---------- Получение элементов со страницы ----------
+
+// 1. Заголовок "Калькулятор верстки" через getElementsByTagName
+const headerTitle = document.getElementsByTagName('h1')[0];
+
+// 2. Кнопки "Рассчитать" и "Сброс" через getElementsByClassName
+const handlerButtons = document.getElementsByClassName('handler_btn');
+
+// 3. Кнопка "+" под выпадающим списком через querySelector
+const screenAddButton = document.querySelector('.screen-btn');
+
+// 4. Элементы с классом other-items и дополнительными классами percent и number через querySelectorAll
+const percentItems = document.querySelectorAll('.other-items.percent');
+const numberItems = document.querySelectorAll('.other-items.number');
+
+// 5. Input type=range через родителя с классом rollback
+const rangeInput = document.querySelector('.rollback input[type=range]');
+
+// 6. Span с классом range-value через родителя с классом rollback
+const rangeValueSpan = document.querySelector('.rollback .range-value');
+
+// 7. Все инпуты с классом total-input справа через getElementsByClassName
+const totalInputs = document.getElementsByClassName('total-input');
+
+// 8. Все блоки с классом screen в изменяемую переменную (далее будем переопределять)
+let screenBlocks = document.querySelectorAll('.screen');
+
 // ---------- Объявление объекта appData ----------
 const appData = {
 	title: '',
@@ -66,7 +93,7 @@ const appData = {
 	asking: function () {
 		// Проверка названия проекта
 		do {
-			appData.title = prompt("Как называется ваш проект?", "Мой проект");
+			appData.title = prompt("Как называется ваш проект?", "Калькулятор вёрстки");
 		} while (!appData.isText(appData.title))
 
 		// Получение информации о типах экранов
@@ -168,3 +195,18 @@ const appData = {
 
 // ---------- Запуск приложения ----------
 appData.start();
+
+
+
+
+// ---------- Проверка получения элементов ----------
+console.log('Заголовок h1:', headerTitle);
+console.log('Кнопки handler_btn:', handlerButtons);
+console.log('Кнопка "+":', screenAddButton);
+console.log('Элементы other-items.percent:', percentItems);
+console.log('Элементы other-items.number:', numberItems);
+console.log('Input range:', rangeInput);
+console.log('Span range-value:', rangeValueSpan);
+console.log('Все total-input:', totalInputs);
+console.log('Блоки screen (изменяемая переменная):', screenBlocks);
+
