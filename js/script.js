@@ -2,143 +2,142 @@
 
 // ---------- Объявление объекта appData ----------
 const appData = {
-	screens: '',
 	title: '',
+	screens: [],
 	screenPrice: 0,
 	adaptive: true,
+	rollback: 10,
 	allServicePrices: 0,
 	fullPrice: 0,
 	servicePercentPrice: 0,
-	service1: '',
-	service2: '',
-	commissionInput: 0,
-	commissionPercent: 10,
+	services: {},
+
+	start: function () {
+		appData.asking();
+		appData.addPrices();
+		appData.getFullPrice();
+		appData.getServicePercentPrices();
+		appData.getTitle();
+
+		appData.logger();
+	},
+
+	isNumber: function (num) {
+		return !isNaN(parseFloat(num)) && isFinite(num)
+	},
+
+	// Проверка: содержит ли строка хотя бы одну букву (не только цифры)
+	isText: function (str) {
+		if (!str || typeof str !== 'string') return false;
+
+		// Проверяем, содержит ли строка хотя бы одну букву (русскую или английскую)
+		const hasLetter = /[a-zA-Zа-яА-ЯёЁ]/.test(str);
+
+		// Проверяем, состоит ли строка ТОЛЬКО из цифр и пробелов
+		const onlyDigitsAndSpaces = /^[\d\s]+$/.test(str);
+
+		return hasLetter && !onlyDigitsAndSpaces;
+	},
+
+	// Проверка: содержит ли строка ТОЛЬКО цифры (число)
+	isOnlyDigits: function (str) {
+		if (!str || typeof str !== 'string') return false;
+
+		// Удаляем все пробелы и проверяем, состоит ли только из цифр
+		const trimmedStr = str.replace(/\s/g, '');
+		return /^\d+$/.test(trimmedStr) || /^\d+\.?\d*$/.test(trimmedStr);
+	},
+
+	// Генерация уникального ключа для услуги
+	generateUniqueKey: function (baseName, obj) {
+		let key = baseName;
+		let counter = 1;
+
+		// Если ключ уже существует, добавляем суффикс
+		while (obj.hasOwnProperty(key)) {
+			key = `${baseName}_${counter}`;
+			counter++;
+		}
+
+		return key;
+	},
 
 	// Получение данных от пользователя
 	asking: function () {
-		appData.title = prompt("Как называется ваш проект?", "Мой проект");
-		appData.screens = prompt("Какие типы экранов нужно разработать?", "Простые, Сложные, Интерактивные");
+		// Проверка названия проекта
+		do {
+			appData.title = prompt("Как называется ваш проект?", "Мой проект");
+		} while (!appData.isText(appData.title))
 
-		// Используем метод для запроса числа
-		appData.screenPrice = appData.askForNumber("Сколько будет стоить данная работа?", "10000");
+		// Получение информации о типах экранов
+		for (let i = 0; i < 2; i++) {
+			let name = '';
+			let price = 0;
+
+			// Проверка типа экрана (текст с буквами)
+			do {
+				name = prompt(`Какие типы экранов нужно разработать? (Экран ${i + 1})`);
+			} while (!appData.isText(name))
+
+			// Проверка цены (только цифры)
+			do {
+				price = prompt(`Сколько будет стоить данная работа? (Экран ${i + 1})`);
+			} while (!appData.isOnlyDigits(price))
+
+			appData.screens.push({
+				id: i,
+				name: name,
+				price: +price
+			})
+		}
+
+		// Получение информации о дополнительных услугах
+		for (let i = 0; i < 2; i++) {
+			let name = '';
+			let price = 0;
+
+			// Проверка названия услуги (текст с буквами)
+			do {
+				name = prompt(`Какой дополнительный тип услуги нужен? (Услуга ${i + 1})`);
+			} while (!appData.isText(name))
+
+			// Проверка цены услуги (только цифры)
+			do {
+				price = prompt(`Сколько это будет стоить? (Услуга ${i + 1})`);
+			} while (!appData.isOnlyDigits(price))
+
+			// Генерируем уникальный ключ для услуги
+			const uniqueKey = appData.generateUniqueKey(name, appData.services);
+			appData.services[uniqueKey] = +price;
+		}
 
 		appData.adaptive = confirm("Нужен ли адаптив на сайте?");
-
-		// Получение процента отката с проверкой
-		do {
-			appData.commissionInput = prompt("Какой процент отката посреднику? (например: 10)", "10");
-
-			// Если пользователь нажал Отмена
-			if (appData.commissionInput === null) {
-				console.warn("Ввод отменен. Используется значение по умолчанию 10%");
-				appData.commissionPercent = 10;
-				break;
-			}
-
-			const parsedCommission = appData.parseNumber(appData.commissionInput);
-
-			if (isNaN(parsedCommission) || parsedCommission < 0 || parsedCommission > 100) {
-				alert("Пожалуйста, введите число от 0 до 100!");
-			} else {
-				appData.commissionPercent = parsedCommission;
-				break;
-			}
-		} while (true);
 	},
 
-	// Улучшенная функция проверки числа
-	isNumber: function (value) {
-		// Проверяем, что значение не null/undefined
-		if (value === null || value === undefined) {
-			return false;
+	addPrices: function () {
+		// Используем reduce для подсчета суммы цен экранов
+		appData.screenPrice = appData.screens.reduce((sum, screen) => {
+			return sum + +screen.price;
+		}, 0);
+
+		// Подсчет суммы дополнительных услуг
+		appData.allServicePrices = 0;
+		for (let key in appData.services) {
+			appData.allServicePrices += appData.services[key];
 		}
-
-		// Убираем пробелы в начале и конце
-		const trimmedValue = value.toString().trim();
-
-		// Проверяем, является ли значение числом после очистки
-		return !isNaN(parseFloat(trimmedValue)) && isFinite(trimmedValue) && trimmedValue !== '';
 	},
 
-	// Функция для безопасного преобразования в число
-	parseNumber: function (value) {
-		if (!appData.isNumber(value)) {
-			return NaN;
-		}
-
-		// Убираем пробелы и преобразуем
-		const trimmedValue = value.toString().trim();
-		return parseFloat(trimmedValue);
-	},
-
-	// Функция для запроса числа с проверкой
-	askForNumber: function (promptMessage, defaultValue) {
-		let inputValue;
-		let parsedNumber;
-
-		do {
-			inputValue = prompt(promptMessage, defaultValue);
-
-			// Если пользователь нажал Отмена
-			if (inputValue === null) {
-				alert("Отмена ввода. Используется значение по умолчанию.");
-				parsedNumber = appData.parseNumber(defaultValue);
-				break;
-			}
-
-			parsedNumber = appData.parseNumber(inputValue);
-
-			if (isNaN(parsedNumber)) {
-				alert("Пожалуйста, введите корректное число!");
-			}
-		} while (isNaN(parsedNumber));
-
-		return parsedNumber;
-	},
-
-	// Function expression для получения суммы дополнительных услуг
-	getAllServicePrices: function () {
-		let sum = 0;
-
-		for (let i = 0; i < 2; i++) {
-			if (i === 0) {
-				appData.service1 = prompt("Какой дополнительный тип услуги нужен? (первая услуга)", "Дизайн");
-
-				// Используем метод для запроса цены
-				const servicePrice = appData.askForNumber("Сколько это будет стоить дополнительная услуга?", "5000");
-				sum += servicePrice;
-
-			} else if (i === 1) {
-				appData.service2 = prompt("Какой дополнительный тип услуги нужен? (вторая услуга)", "SEO");
-
-				// Используем метод для запроса цены
-				const servicePrice = appData.askForNumber("Сколько это будет стоить дополнительная услуга?", "5000");
-				sum += servicePrice;
-			}
-		}
-		return sum;
-	},
-
-	// Function declaration для получения полной стоимости
 	getFullPrice: function () {
-		return appData.screenPrice + appData.allServicePrices;
+		appData.fullPrice = appData.screenPrice + appData.allServicePrices;
 	},
 
-	// Функция для форматирования названия
+	getServicePercentPrices: function () {
+		appData.servicePercentPrice = appData.fullPrice - (appData.fullPrice * (appData.rollback / 100))
+	},
+
 	getTitle: function () {
 		// Удаляем начальные пробелы и преобразуем первый символ в верхний регистр, остальные в нижний
-		return appData.title.trim().charAt(0).toUpperCase() + appData.title.trim().slice(1).toLowerCase();
-	},
-
-	// Функция для получения стоимости за вычетом отката
-	getServicePercentPrices: function () {
-		const commissionAmount = appData.fullPrice * (appData.commissionPercent / 100);
-		return Math.ceil(appData.fullPrice - commissionAmount);
-	},
-
-	// Функция для проверки типа переменной
-	showTypeOf: function (variable) {
-		console.log(typeof variable, variable);
+		appData.title = appData.title.trim().charAt(0).toUpperCase() + appData.title.trim().slice(1).toLowerCase();
 	},
 
 	// Функция для получения сообщения о скидке
@@ -156,25 +155,14 @@ const appData = {
 		}
 	},
 
-
-	// Основной метод запуска приложения
-	start: function () {
-		// Получение данных от пользователя
-		appData.asking();
-
-		// Расчеты
-		appData.allServicePrices = appData.getAllServicePrices();
-		appData.fullPrice = appData.getFullPrice();
-		appData.servicePercentPrice = appData.getServicePercentPrices();
-
-		// Форматирование названия
-		appData.title = appData.getTitle();
-
-		// Вывод в консоль
-		console.log(appData.title);
-		console.log(appData.fullPrice);
-		console.log(appData.allServicePrices);
-
+	logger: function () {
+		console.log('Общая стоимость: ', appData.fullPrice);
+		console.log('Стоимость со скидкой: ', appData.servicePercentPrice);
+		console.log('Стоимость экранов: ', appData.screenPrice);
+		console.log('Типы экранов: ', appData.screens);
+		console.log('Дополнительные услуги: ', appData.services);
+		console.log('Название проекта: ', appData.title);
+		console.log('Сообщение о скидке: ', appData.getRollbackMessage(appData.fullPrice));
 	}
 };
 
