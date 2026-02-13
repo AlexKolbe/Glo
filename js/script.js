@@ -1,212 +1,166 @@
-'use strict';
+/*
+Используя только файл скрипта выполнить такие действия:
 
-// ---------- Получение элементов со страницы ----------
+Восстановить порядок книг.
+Заменить картинку заднего фона на другую из папки image
+Исправить заголовок в книге 3( Получится - "Книга 3. this и Прототипы Объектов")
+Удалить рекламу со страницы
+Восстановить порядок глав во второй и пятой книге (внимательно инспектируйте индексы элементов, поможет dev tools)
+в шестой книге добавить главу “Глава 8: За пределами ES6” и поставить её в правильное место
 
-// 1. Заголовок "Калькулятор верстки" через getElementsByTagName
-const headerTitle = document.getElementsByTagName('h1')[0];
+Проверить, чтобы все работало и не было ошибок в консоли
+*/
 
-// 2. Кнопки "Рассчитать" и "Сброс" через getElementsByClassName
-const handlerButtons = document.getElementsByClassName('handler_btn');
+// Восстанавливаем порядок книг (сортировка по номеру книги)
+function sortBooks() {
+	const booksContainer = document.querySelector('.books');
+	const books = Array.from(booksContainer.children);
 
-// 3. Кнопка "+" под выпадающим списком через querySelector
-const screenAddButton = document.querySelector('.screen-btn');
+	// Сортируем книги по номеру (извлекаем цифру из заголовка)
+	books.sort((a, b) => {
+		const numA = parseInt(a.querySelector('h2').textContent.match(/\d+/)[0]);
+		const numB = parseInt(b.querySelector('h2').textContent.match(/\d+/)[0]);
+		return numA - numB;
+	});
 
-// 4. Элементы с классом other-items и дополнительными классами percent и number через querySelectorAll
-const percentItems = document.querySelectorAll('.other-items.percent');
-const numberItems = document.querySelectorAll('.other-items.number');
+	// Удаляем все книги и добавляем в правильном порядке
+	books.forEach(book => booksContainer.appendChild(book));
+}
 
-// 5. Input type=range через родителя с классом rollback
-const rangeInput = document.querySelector('.rollback input[type=range]');
+// Меняем фоновое изображение
+function changeBackground() {
+	// Можно выбрать любую картинку из папки image
+	// Например: 'closed_book.jpg', 'open_book.jpg', 'book_shelf.jpg' и т.д.
+	document.body.style.backgroundImage = 'url("./image/closed_book.jpg")';
+}
 
-// 6. Span с классом range-value через родителя с классом rollback
-const rangeValueSpan = document.querySelector('.rollback .range-value');
-
-// 7. Все инпуты с классом total-input справа через getElementsByClassName
-const totalInputs = document.getElementsByClassName('total-input');
-
-// 8. Все блоки с классом screen в изменяемую переменную (далее будем переопределять)
-let screenBlocks = document.querySelectorAll('.screen');
-
-// ---------- Объявление объекта appData ----------
-const appData = {
-	title: '',
-	screens: [],
-	screenPrice: 0,
-	adaptive: true,
-	rollback: 10,
-	allServicePrices: 0,
-	fullPrice: 0,
-	servicePercentPrice: 0,
-	services: {},
-
-	start: function () {
-		appData.asking();
-		appData.addPrices();
-		appData.getFullPrice();
-		appData.getServicePercentPrices();
-		appData.getTitle();
-
-		appData.logger();
-	},
-
-	isNumber: function (num) {
-		return !isNaN(parseFloat(num)) && isFinite(num)
-	},
-
-	// Проверка: содержит ли строка хотя бы одну букву (не только цифры)
-	isText: function (str) {
-		if (!str || typeof str !== 'string') return false;
-
-		// Проверяем, содержит ли строка хотя бы одну букву (русскую или английскую)
-		const hasLetter = /[a-zA-Zа-яА-ЯёЁ]/.test(str);
-
-		// Проверяем, состоит ли строка ТОЛЬКО из цифр и пробелов
-		const onlyDigitsAndSpaces = /^[\d\s]+$/.test(str);
-
-		return hasLetter && !onlyDigitsAndSpaces;
-	},
-
-	// Проверка: содержит ли строка ТОЛЬКО цифры (число)
-	isOnlyDigits: function (str) {
-		if (!str || typeof str !== 'string') return false;
-
-		// Удаляем все пробелы и проверяем, состоит ли только из цифр
-		const trimmedStr = str.replace(/\s/g, '');
-		return /^\d+$/.test(trimmedStr) || /^\d+\.?\d*$/.test(trimmedStr);
-	},
-
-	// Генерация уникального ключа для услуги
-	generateUniqueKey: function (baseName, obj) {
-		let key = baseName;
-		let counter = 1;
-
-		// Если ключ уже существует, добавляем суффикс
-		while (obj.hasOwnProperty(key)) {
-			key = `${baseName}_${counter}`;
-			counter++;
+// Исправляем заголовок третьей книги
+function fixBook3Title() {
+	const bookTitles = document.querySelectorAll('.book h2 a');
+	// Ищем книгу с неправильным заголовком
+	bookTitles.forEach(title => {
+		if (title.textContent.includes('Пропопипы')) {
+			title.textContent = 'Книга 3. this и Прототипы Объектов';
 		}
+	});
+}
 
-		return key;
-	},
+// Удаляем рекламу
+function removeAdv() {
+	const adv = document.querySelector('.adv');
+	if (adv) adv.remove();
+}
 
-	// Получение данных от пользователя
-	asking: function () {
-		// Проверка названия проекта
-		do {
-			appData.title = prompt("Как называется ваш проект?", "Калькулятор вёрстки");
-		} while (!appData.isText(appData.title))
+// Восстанавливаем порядок глав во второй книге
+function fixBook2Chapters() {
+	const books = document.querySelectorAll('.book');
+	const book2 = books[1]; // Вторая книга (индекс 1 после сортировки)
 
-		// Получение информации о типах экранов
-		for (let i = 0; i < 2; i++) {
-			let name = '';
-			let price = 0;
+	if (book2) {
+		const chapters = Array.from(book2.querySelectorAll('li'));
+		// Правильный порядок глав из условия задачи
+		const correctOrder = [
+			'Введение',
+			'Предисловие',
+			'Глава 1: Введение в программирование',
+			'Глава 2: Введение в JavaScript',
+			'Глава 3: Введение в "Вы не знаете JavaScript"',
+			'Приложение A: Благодарности!'
+		];
 
-			// Проверка типа экрана (текст с буквами)
-			do {
-				name = prompt(`Какие типы экранов нужно разработать? (Экран ${i + 1})`);
-			} while (!appData.isText(name))
-
-			// Проверка цены (только цифры)
-			do {
-				price = prompt(`Сколько будет стоить данная работа? (Экран ${i + 1})`);
-			} while (!appData.isOnlyDigits(price))
-
-			appData.screens.push({
-				id: i,
-				name: name,
-				price: +price
-			})
-		}
-
-		// Получение информации о дополнительных услугах
-		for (let i = 0; i < 2; i++) {
-			let name = '';
-			let price = 0;
-
-			// Проверка названия услуги (текст с буквами)
-			do {
-				name = prompt(`Какой дополнительный тип услуги нужен? (Услуга ${i + 1})`);
-			} while (!appData.isText(name))
-
-			// Проверка цены услуги (только цифры)
-			do {
-				price = prompt(`Сколько это будет стоить? (Услуга ${i + 1})`);
-			} while (!appData.isOnlyDigits(price))
-
-			// Генерируем уникальный ключ для услуги
-			const uniqueKey = appData.generateUniqueKey(name, appData.services);
-			appData.services[uniqueKey] = +price;
-		}
-
-		appData.adaptive = confirm("Нужен ли адаптив на сайте?");
-	},
-
-	addPrices: function () {
-		// Используем reduce для подсчета суммы цен экранов
-		appData.screenPrice = appData.screens.reduce((sum, screen) => {
-			return sum + +screen.price;
-		}, 0);
-
-		// Подсчет суммы дополнительных услуг
-		appData.allServicePrices = 0;
-		for (let key in appData.services) {
-			appData.allServicePrices += appData.services[key];
-		}
-	},
-
-	getFullPrice: function () {
-		appData.fullPrice = appData.screenPrice + appData.allServicePrices;
-	},
-
-	getServicePercentPrices: function () {
-		appData.servicePercentPrice = appData.fullPrice - (appData.fullPrice * (appData.rollback / 100))
-	},
-
-	getTitle: function () {
-		// Удаляем начальные пробелы и преобразуем первый символ в верхний регистр, остальные в нижний
-		appData.title = appData.title.trim().charAt(0).toUpperCase() + appData.title.trim().slice(1).toLowerCase();
-	},
-
-	// Функция для получения сообщения о скидке
-	getRollbackMessage: function (price) {
-		if (price > 30000) {
-			return "Даем скидку в 10%";
-		} else if (price >= 15000 && price <= 30000) {
-			return "Даем скидку в 5%";
-		} else if (price > 0 && price < 15000) {
-			return "Скидка не предусмотрена";
-		} else if (price < 0) {
-			return "Что то пошло не так";
-		} else {
-			return "Стоимость равна 0, 15000 или 30000";
-		}
-	},
-
-	logger: function () {
-		console.log('Общая стоимость: ', appData.fullPrice);
-		console.log('Стоимость со скидкой: ', appData.servicePercentPrice);
-		console.log('Стоимость экранов: ', appData.screenPrice);
-		console.log('Типы экранов: ', appData.screens);
-		console.log('Дополнительные услуги: ', appData.services);
-		console.log('Название проекта: ', appData.title);
-		console.log('Сообщение о скидке: ', appData.getRollbackMessage(appData.fullPrice));
+		const ul = book2.querySelector('ul');
+		ul.innerHTML = '';
+		correctOrder.forEach(text => {
+			const li = document.createElement('li');
+			li.className = 'chapter';
+			li.textContent = text;
+			ul.appendChild(li);
+		});
 	}
-};
+}
 
-// ---------- Запуск приложения ----------
-appData.start();
+// Восстанавливаем порядок глав в пятой книге
+function fixBook5Chapters() {
+	const books = document.querySelectorAll('.book');
+	const book5 = books[4]; // Пятая книга (индекс 4 после сортировки)
 
+	if (book5) {
+		const chapters = Array.from(book5.querySelectorAll('li'));
+		// Правильный порядок глав из условия задачи
+		const correctOrder = [
+			'Введение',
+			'Предисловие',
+			'Глава 1: Асинхронность: Сейчас и Тогда',
+			'Глава 2: Колбеки',
+			'Глава 3: Обещания',
+			'Глава 4: Генераторы',
+			'Глава 5: Производительность программы',
+			'Глава 6: Бенчмаркинг и настройка',
+			'Приложение A: Библиотека: asynquence',
+			'Приложение B: Расширенные асинхронные шаблоны',
+			'Приложение C: Благодарности!'
+		];
 
+		const ul = book5.querySelector('ul');
+		ul.innerHTML = '';
+		correctOrder.forEach(text => {
+			const li = document.createElement('li');
+			li.textContent = text;
+			ul.appendChild(li);
+		});
+	}
+}
 
+// Добавляем главу в шестую книгу
+function addChapterToBook6() {
+	const books = document.querySelectorAll('.book');
+	const book6 = books[5]; // Шестая книга (индекс 5 после сортировки)
 
-// ---------- Проверка получения элементов ----------
-console.log('Заголовок h1:', headerTitle);
-console.log('Кнопки handler_btn:', handlerButtons);
-console.log('Кнопка "+":', screenAddButton);
-console.log('Элементы other-items.percent:', percentItems);
-console.log('Элементы other-items.number:', numberItems);
-console.log('Input range:', rangeInput);
-console.log('Span range-value:', rangeValueSpan);
-console.log('Все total-input:', totalInputs);
-console.log('Блоки screen (изменяемая переменная):', screenBlocks);
+	if (book6) {
+		const ul = book6.querySelector('ul');
+		const chapters = Array.from(ul.children);
 
+		// Создаем новую главу
+		const newChapter = document.createElement('li');
+		newChapter.textContent = 'Глава 8: За пределами ES6';
+
+		// Вставляем после Главы 7
+		let inserted = false;
+		for (let i = 0; i < chapters.length; i++) {
+			if (chapters[i].textContent.includes('Глава 7:')) {
+				chapters[i].insertAdjacentElement('afterend', newChapter);
+				inserted = true;
+				break;
+			}
+		}
+
+		// Если Глава 7 не найдена, добавляем в конец
+		if (!inserted) {
+			ul.appendChild(newChapter);
+		}
+	}
+}
+
+// Основная функция
+function main() {
+	try {
+		sortBooks();
+		changeBackground();
+		fixBook3Title();
+		removeAdv();
+		fixBook2Chapters();
+		fixBook5Chapters();
+		addChapterToBook6();
+		console.log('Все операции выполнены успешно!');
+	} catch (error) {
+		console.error('Произошла ошибка:', error);
+	}
+}
+
+// Запускаем после полной загрузки DOM
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', main);
+} else {
+	// DOM уже загружен
+	main();
+}
