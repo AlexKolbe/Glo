@@ -6,7 +6,8 @@
 const headerTitle = document.getElementsByTagName('h1')[0];
 
 // 2. Кнопки "Рассчитать" и "Сброс" через getElementsByClassName
-const handlerButtons = document.getElementsByClassName('handler_btn');
+const startBtn = document.getElementsByClassName('handler_btn')[0];
+const resetBtn = document.getElementsByClassName('handler_btn')[1];
 
 // 3. Кнопка "+" под выпадающим списком через querySelector
 const screenAddButton = document.querySelector('.screen-btn');
@@ -22,10 +23,14 @@ const rangeInput = document.querySelector('.rollback input[type=range]');
 const rangeValueSpan = document.querySelector('.rollback .range-value');
 
 // 7. Все инпуты с классом total-input справа через getElementsByClassName
-const totalInputs = document.getElementsByClassName('total-input');
+const total = document.getElementsByClassName('total-input')[0];
+const totalCount = document.getElementsByClassName('total-input')[1];
+const totalCountOther = document.getElementsByClassName('total-input')[2];
+const fullTotalCount = document.getElementsByClassName('total-input')[3];
+const totalCountRollback = document.getElementsByClassName('total-input')[4];
 
 // 8. Все блоки с классом screen в изменяемую переменную (далее будем переопределять)
-let screenBlocks = document.querySelectorAll('.screen');
+let screens = document.querySelectorAll('.screen');
 
 // ---------- Объявление объекта appData ----------
 const appData = {
@@ -34,23 +39,97 @@ const appData = {
 	screenPrice: 0,
 	adaptive: true,
 	rollback: 10,
-	allServicePrices: 0,
+	servicePricesPercent: 0,
+	servicePricesNumber: 0,
 	fullPrice: 0,
 	servicePercentPrice: 0,
-	services: {},
+	servicesPercent: {},
+	servicesNumber: {},
 
-	start: function () {
-		appData.asking();
-		appData.addPrices();
-		appData.getFullPrice();
-		appData.getServicePercentPrices();
-		appData.getTitle();
+	init: function () {
+		appData.addTitle();
 
-		appData.logger();
+		startBtn.addEventListener('click', appData.start);
+		screenAddButton.addEventListener('click', appData.addScreenBlock);
 	},
 
-	isNumber: function (num) {
-		return !isNaN(parseFloat(num)) && isFinite(num)
+	addTitle: function () {
+		document.title = title.textContent;
+	},
+
+	start: function () {
+
+		appData.addScreens();
+		appData.addServices();
+
+		appData.addPrices();
+
+		// appData.getServicePercentPrices();
+
+
+		// appData.logger();
+
+		appData.showResult();
+	},
+
+	showResult: function () {
+		// alert('alert' + appData.fullPrice);
+		total.value = appData.screenPrice
+		// totalCount
+		totalCountOther.value = appData.servicePricesPercent + appData.servicePricesNumber;
+		fullTotalCount.value = appData.fullPrice;
+		// totalCountRollback
+	},
+
+	addScreens: function () {
+		// console.log('add screens');
+		screens = document.querySelectorAll('.screen');
+		screens.forEach(function (screen, index) {
+			// console.log(screen);
+			const select = screen.querySelector('select');
+			const input = screen.querySelector('input');
+			const selectName = select.options[select.selectedIndex].textContent;
+
+			appData.screens.push({
+				id: index,
+				name: selectName,
+				price: +select.value * +input.value
+			})
+
+			// console.log(select.value);
+			// console.log(input.value);
+		})
+
+		console.log(appData.screens);
+	},
+
+	addServices: function () {
+		percentItems.forEach(function (item) {
+
+			const check = item.querySelector('input[type=checkbox');
+			const label = item.querySelector('label');
+			const input = item.querySelector('input[type=text');
+
+			console.log(check);
+			console.log(label);
+			console.log(input);
+			if (check.checked) {
+				appData.servicesPercent[label.textContent] = +input.value
+			}
+		});
+
+		numberItems.forEach(function (item) {
+
+			const check = item.querySelector('input[type=checkbox');
+			const label = item.querySelector('label');
+			const input = item.querySelector('input[type=text');
+
+			if (check.checked) {
+				appData.servicesNumber[label.textContent] = +input.value
+			}
+		});
+
+
 	},
 
 	// Проверка: содержит ли строка хотя бы одну букву (не только цифры)
@@ -89,56 +168,11 @@ const appData = {
 		return key;
 	},
 
-	// Получение данных от пользователя
-	asking: function () {
-		// Проверка названия проекта
-		do {
-			appData.title = prompt("Как называется ваш проект?", "Калькулятор вёрстки");
-		} while (!appData.isText(appData.title))
-
-		// Получение информации о типах экранов
-		for (let i = 0; i < 2; i++) {
-			let name = '';
-			let price = 0;
-
-			// Проверка типа экрана (текст с буквами)
-			do {
-				name = prompt(`Какие типы экранов нужно разработать? (Экран ${i + 1})`);
-			} while (!appData.isText(name))
-
-			// Проверка цены (только цифры)
-			do {
-				price = prompt(`Сколько будет стоить данная работа? (Экран ${i + 1})`);
-			} while (!appData.isOnlyDigits(price))
-
-			appData.screens.push({
-				id: i,
-				name: name,
-				price: +price
-			})
-		}
-
-		// Получение информации о дополнительных услугах
-		for (let i = 0; i < 2; i++) {
-			let name = '';
-			let price = 0;
-
-			// Проверка названия услуги (текст с буквами)
-			do {
-				name = prompt(`Какой дополнительный тип услуги нужен? (Услуга ${i + 1})`);
-			} while (!appData.isText(name))
-
-			// Проверка цены услуги (только цифры)
-			do {
-				price = prompt(`Сколько это будет стоить? (Услуга ${i + 1})`);
-			} while (!appData.isOnlyDigits(price))
-
-			// Генерируем уникальный ключ для услуги
-			const uniqueKey = appData.generateUniqueKey(name, appData.services);
-			appData.services[uniqueKey] = +price;
-		}
-
-		appData.adaptive = confirm("Нужен ли адаптив на сайте?");
+	addScreenBlock: function () {
+		console.log('click');
+		const cloneScreen = screens[0].cloneNode(true);
+		// console.log(cloneScreen);
+		screens[screens.length - 1].after(cloneScreen)
 	},
 
 	addPrices: function () {
@@ -149,23 +183,23 @@ const appData = {
 
 		// Подсчет суммы дополнительных услуг
 		appData.allServicePrices = 0;
-		for (let key in appData.services) {
-			appData.allServicePrices += appData.services[key];
+		for (let key in appData.servicesNumber) {
+			appData.servicePricesNumber += appData.servicesNumber[key];
 		}
+
+		for (let key in appData.servicesPercent) {
+			appData.servicePricesPercent += appData.screenPrice * (appData.servicesPercent[key] / 100);
+		}
+		appData.fullPrice = appData.screenPrice + appData.servicePricesPercent + appData.servicePricesNumber;
 	},
 
-	getFullPrice: function () {
-		appData.fullPrice = appData.screenPrice + appData.allServicePrices;
-	},
+
 
 	getServicePercentPrices: function () {
 		appData.servicePercentPrice = appData.fullPrice - (appData.fullPrice * (appData.rollback / 100))
 	},
 
-	getTitle: function () {
-		// Удаляем начальные пробелы и преобразуем первый символ в верхний регистр, остальные в нижний
-		appData.title = appData.title.trim().charAt(0).toUpperCase() + appData.title.trim().slice(1).toLowerCase();
-	},
+
 
 	// Функция для получения сообщения о скидке
 	getRollbackMessage: function (price) {
@@ -194,19 +228,19 @@ const appData = {
 };
 
 // ---------- Запуск приложения ----------
-appData.start();
+appData.init();
 
 
 
 
-// ---------- Проверка получения элементов ----------
-console.log('Заголовок h1:', headerTitle);
-console.log('Кнопки handler_btn:', handlerButtons);
-console.log('Кнопка "+":', screenAddButton);
-console.log('Элементы other-items.percent:', percentItems);
-console.log('Элементы other-items.number:', numberItems);
-console.log('Input range:', rangeInput);
-console.log('Span range-value:', rangeValueSpan);
-console.log('Все total-input:', totalInputs);
-console.log('Блоки screen (изменяемая переменная):', screenBlocks);
+// // ---------- Проверка получения элементов ----------
+// console.log('Заголовок h1:', headerTitle);
+// console.log('Кнопки Рассчитать:', startBtn);
+// console.log('Кнопка "+":', screenAddButton);
+// console.log('Элементы other-items.percent:', percentItems);
+// console.log('Элементы other-items.number:', numberItems);
+// console.log('Input range:', rangeInput);
+// console.log('Span range-value:', rangeValueSpan);
+// console.log('Все total-input:', totalInputs);
+// console.log('Блоки screen (изменяемая переменная):', screens);
 
