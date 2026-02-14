@@ -32,6 +32,20 @@ const totalCountRollback = document.getElementsByClassName('total-input')[4];
 // 8. Все блоки с классом screen в изменяемую переменную (далее будем переопределять)
 let screens = document.querySelectorAll('.screen');
 
+// ---------- Дополнительные элементы для CMS ----------
+const cmsCheckbox = document.getElementById('cms-open');
+const hiddenCmsBlock = document.querySelector('.hidden-cms-variants');
+const cmsSelect = document.getElementById('cms-select');
+const cmsOtherInput = document.getElementById('cms-other-input');
+const cmsOtherBlock = document.querySelector('.hidden-cms-variants .main-controls__input');
+
+// Сохраняем исходные значения из HTML
+const defaultValues = {
+	screenInputs: [],
+	percentInputs: [],
+	numberInputs: []
+};
+
 // ---------- Объявление объекта appData ----------
 const appData = {
 	title: '',
@@ -44,9 +58,11 @@ const appData = {
 	fullPrice: 0,
 	servicesPercent: {},
 	servicesNumber: {},
+	cmsPrice: 0,
 
 	init() {
 		this.addTitle();
+		this.saveDefaultValues(); // Сохраняем исходные значения
 
 		// Добавляем обработчик для range с привязкой контекста
 		rangeInput.addEventListener('input', (e) => this.updateRollback(e));
@@ -56,12 +72,67 @@ const appData = {
 		resetBtn.addEventListener('click', () => this.reset());
 		screenAddButton.addEventListener('click', () => this.addScreenBlock());
 
+		// Добавляем обработчики для CMS
+		cmsCheckbox.addEventListener('change', (e) => this.toggleCmsBlock(e));
+		cmsSelect.addEventListener('change', (e) => this.handleCmsSelect(e));
+
 		// Изначально скрываем кнопку сброс
 		resetBtn.style.display = 'none';
 	},
 
+	// Сохраняем исходные значения из HTML
+	saveDefaultValues() {
+		// Сохраняем значения для блоков экранов
+		screens.forEach((screen) => {
+			const input = screen.querySelector('input');
+			defaultValues.screenInputs.push(input.value);
+		});
+
+		// Сохраняем значения для percent блоков
+		percentItems.forEach((item) => {
+			const input = item.querySelector('input[type=text]');
+			defaultValues.percentInputs.push({
+				element: input,
+				value: input.value
+			});
+		});
+
+		// Сохраняем значения для number блоков
+		numberItems.forEach((item) => {
+			const input = item.querySelector('input[type=text]');
+			defaultValues.numberInputs.push({
+				element: input,
+				value: input.value
+			});
+		});
+	},
+
 	addTitle() {
 		document.title = headerTitle.textContent;
+	},
+
+	// Обработчик для чекбокса CMS
+	toggleCmsBlock(e) {
+		if (e.target.checked) {
+			hiddenCmsBlock.style.display = 'flex';
+		} else {
+			hiddenCmsBlock.style.display = 'none';
+			// Сбрасываем select и скрываем input при снятии чекбокса
+			cmsSelect.value = '';
+			cmsOtherBlock.style.display = 'none';
+			cmsOtherInput.value = '';
+			this.cmsPrice = 0;
+		}
+	},
+
+	// Обработчик для select CMS
+	handleCmsSelect(e) {
+		if (e.target.value === 'other') {
+			cmsOtherBlock.style.display = 'flex';
+		} else {
+			cmsOtherBlock.style.display = 'none';
+			cmsOtherInput.value = '';
+		}
 	},
 
 	start() {
@@ -73,13 +144,77 @@ const appData = {
 
 		this.addScreens();
 		this.addServices();
-		this.addPrices();
+
+		// Сначала рассчитываем базовую стоимость экранов
+		this.calculateScreenPrice();
+
+		// Затем рассчитываем стоимость дополнительных услуг (проценты от стоимости экранов)
+		this.calculateServicesPrice();
+
+		// Рассчитываем стоимость CMS (проценты от стоимости экранов)
+		this.calculateCmsPrice();
+
+		// Собираем полную стоимость
+		this.calculateFullPrice();
+
 		this.showResult();
 		this.disableInputs();
 
 		// Меняем видимость кнопок
 		startBtn.style.display = 'none';
 		resetBtn.style.display = 'block';
+	},
+
+	// Расчет стоимости экранов
+	calculateScreenPrice() {
+		this.screenPrice = this.screens.reduce((sum, screen) => {
+			return sum + screen.price;
+		}, 0);
+
+		// Общее количество экранов
+		this.totalScreensCount = this.screens.reduce((sum, screen) => {
+			return sum + screen.count;
+		}, 0);
+	},
+
+	// Расчет стоимости дополнительных услуг
+	calculateServicesPrice() {
+		this.servicePricesNumber = 0;
+		this.servicePricesPercent = 0;
+
+		for (let key in this.servicesNumber) {
+			this.servicePricesNumber += this.servicesNumber[key];
+		}
+
+		for (let key in this.servicesPercent) {
+			this.servicePricesPercent += this.screenPrice * (this.servicesPercent[key] / 100);
+		}
+	},
+
+	// Расчет стоимости CMS (проценты от стоимости экранов)
+	calculateCmsPrice() {
+		this.cmsPrice = 0;
+
+		if (cmsCheckbox.checked) {
+			const selectedValue = cmsSelect.value;
+
+			if (selectedValue === '50') {
+				// WordPress - 50% от стоимости экранов
+				this.cmsPrice = this.screenPrice * 0.5;
+			} else if (selectedValue === 'other' && cmsOtherInput.value) {
+				// Другое - введенное значение (предполагаем, что это проценты)
+				const percent = +cmsOtherInput.value;
+				if (!isNaN(percent)) {
+					this.cmsPrice = this.screenPrice * (percent / 100);
+				}
+			}
+		}
+	},
+
+	// Расчет полной стоимости
+	calculateFullPrice() {
+		// Полная стоимость = экраны + доп. услуги (числовые) + доп. услуги (проценты) + CMS
+		this.fullPrice = this.screenPrice + this.servicePricesNumber + this.servicePricesPercent + this.cmsPrice;
 	},
 
 	// Проверка заполненности блоков экранов
@@ -157,32 +292,6 @@ const appData = {
 		screens = document.querySelectorAll('.screen');
 	},
 
-	addPrices() {
-		// Сумма цен экранов
-		this.screenPrice = this.screens.reduce((sum, screen) => {
-			return sum + screen.price;
-		}, 0);
-
-		// Общее количество экранов
-		this.totalScreensCount = this.screens.reduce((sum, screen) => {
-			return sum + screen.count;
-		}, 0);
-
-		// Сумма дополнительных услуг
-		this.servicePricesNumber = 0;
-		this.servicePricesPercent = 0;
-
-		for (let key in this.servicesNumber) {
-			this.servicePricesNumber += this.servicesNumber[key];
-		}
-
-		for (let key in this.servicesPercent) {
-			this.servicePricesPercent += this.screenPrice * (this.servicesPercent[key] / 100);
-		}
-
-		this.fullPrice = this.screenPrice + this.servicePricesPercent + this.servicePricesNumber;
-	},
-
 	// Обновление значения range
 	updateRollback(e) {
 		const value = e.target.value;
@@ -210,6 +319,11 @@ const appData = {
 			const input = item.querySelector('input[type=text]');
 			input.disabled = true;
 		});
+
+		// Блокируем элементы CMS
+		cmsCheckbox.disabled = true;
+		cmsSelect.disabled = true;
+		cmsOtherInput.disabled = true;
 	},
 
 	// Разблокировка всех input[type=text] и select
@@ -232,32 +346,52 @@ const appData = {
 			const input = item.querySelector('input[type=text]');
 			input.disabled = false;
 		});
+
+		// Разблокируем элементы CMS
+		cmsCheckbox.disabled = false;
+		cmsSelect.disabled = false;
+		cmsOtherInput.disabled = false;
 	},
 
-	// Сброс всех значений
+	// Сброс всех значений к исходным из HTML
 	resetInputValues() {
 		// Сбрасываем select и input в блоках screen
-		screens.forEach((screen) => {
+		screens.forEach((screen, index) => {
 			const select = screen.querySelector('select');
 			const input = screen.querySelector('input');
-			select.value = '';
-			input.value = '';
+			select.value = ''; // Сбрасываем select на первый пустой option
+			input.value = ''; // Очищаем input экрана (в HTML нет value)
 		});
 
-		// Сбрасываем input[type=text] в блоках услуг
+		// Сбрасываем input[type=text] в блоках услуг к исходным значениям
 		percentItems.forEach((item) => {
 			const check = item.querySelector('input[type=checkbox]');
 			const input = item.querySelector('input[type=text]');
 			check.checked = false;
-			input.value = '';
+			// Восстанавливаем исходное значение из HTML
+			const defaultItem = defaultValues.percentInputs.find(d => d.element === input);
+			if (defaultItem) {
+				input.value = defaultItem.value;
+			}
 		});
 
 		numberItems.forEach((item) => {
 			const check = item.querySelector('input[type=checkbox]');
 			const input = item.querySelector('input[type=text]');
 			check.checked = false;
-			input.value = '';
+			// Восстанавливаем исходное значение из HTML
+			const defaultItem = defaultValues.numberInputs.find(d => d.element === input);
+			if (defaultItem) {
+				input.value = defaultItem.value;
+			}
 		});
+
+		// Сбрасываем CMS
+		cmsCheckbox.checked = false;
+		hiddenCmsBlock.style.display = 'none';
+		cmsSelect.value = '';
+		cmsOtherBlock.style.display = 'none';
+		cmsOtherInput.value = '';
 
 		// Сбрасываем range
 		rangeInput.value = 0;
@@ -289,7 +423,7 @@ const appData = {
 		// Удаляем дополнительные блоки экранов
 		this.removeExtraScreens();
 
-		// Сбрасываем значения всех полей ввода
+		// Сбрасываем значения всех полей ввода к исходным
 		this.resetInputValues();
 
 		// Разблокируем все инпуты
@@ -304,6 +438,7 @@ const appData = {
 		this.fullPrice = 0;
 		this.servicesPercent = {};
 		this.servicesNumber = {};
+		this.cmsPrice = 0;
 
 		// Меняем видимость кнопок
 		startBtn.style.display = 'block';
