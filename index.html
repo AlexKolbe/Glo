@@ -3,10 +3,123 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LEsson16</title>
+    <title>Управление сотрудниками</title>
+    <link href="./css/style.css" rel="stylesheet" />
     <script src="./js/script.js" defer></script>
   </head>
   <body>
-    <h1>Lesson 16</h1>
+    <div class="container">
+      <header>
+        <h1>Система управления сотрудниками</h1>
+        <p>Добавление и управление информацией о сотрудниках</p>
+      </header>
+
+      <div class="form-section">
+        <h2>Добавить нового сотрудника</h2>
+        <form id="employeeForm">
+          <div class="form-group">
+            <label for="type">Тип сотрудника:</label>
+            <select id="type" required>
+              <option value="">Выберите тип сотрудника</option>
+              <option value="mechanic">Слесарь</option>
+              <option value="driver">Водитель</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="firstName">Имя:</label>
+            <input type="text" id="firstName" required />
+          </div>
+
+          <div class="form-group">
+            <label for="lastName">Фамилия:</label>
+            <input type="text" id="lastName" required />
+          </div>
+
+          <div class="form-group">
+            <label for="age">Возраст:</label>
+            <input type="number" id="age" min="18" max="100" required />
+          </div>
+
+          <div class="form-group">
+            <label for="position">Должность:</label>
+            <input type="text" id="position" required />
+          </div>
+
+          <div class="form-group">
+            <label for="experience">Стаж работы (лет):</label>
+            <input type="number" id="experience" min="0" max="70" required />
+          </div>
+
+          <!-- Дополнительные поля для слесаря -->
+          <div class="form-group mechanic-field" style="display: none">
+            <label for="specialization">Специализация:</label>
+            <input
+              type="text"
+              id="specialization"
+              placeholder="Например: ремонт двигателей"
+            />
+          </div>
+
+          <div class="form-group mechanic-field" style="display: none">
+            <label for="toolCount">Количество инструментов:</label>
+            <input type="number" id="toolCount" min="1" max="100" />
+          </div>
+
+          <!-- Дополнительные поля для водителя -->
+          <div class="form-group driver-field" style="display: none">
+            <label for="licenseCategory">Категория прав:</label>
+            <select id="licenseCategory">
+              <option value="">Выберите категорию</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+            </select>
+          </div>
+
+          <div class="form-group driver-field" style="display: none">
+            <label for="carModel">Модель автомобиля:</label>
+            <input
+              type="text"
+              id="carModel"
+              placeholder="Например: Volvo FH16"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="hasChildren" /> Имеет детей
+            </label>
+          </div>
+
+          <button type="submit">Сохранить</button>
+        </form>
+      </div>
+
+      <div class="table-section">
+        <h2>Список сотрудников</h2>
+        <table id="employeeTable">
+          <thead>
+            <tr>
+              <th>Тип</th>
+              <th>Имя</th>
+              <th>Фамилия</th>
+              <th>Возраст</th>
+              <th>Должность</th>
+              <th>Стаж</th>
+              <th>Дети</th>
+              <th>Доп. информация</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Данные будут добавляться через JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
   </body>
 </html>
